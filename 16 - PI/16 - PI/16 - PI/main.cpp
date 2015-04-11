@@ -25,7 +25,7 @@ void calculate(int begin, int end)
 	{
 		sum = sum + 4./((4.*i+2)*(4.*i+3)*(4.*i+4)) - 4./((4.*i+4)*(4.*i+5)*(4.*i+6));
 	}
-	cout << "sum = " << sum << endl;
+//	cout << "sum = " << sum << endl;
 	MUTEX.lock();
 	PI = PI + sum;
 	MUTEX.unlock();
@@ -51,10 +51,10 @@ int main()
 	cin >> threads;
 
 	piece temp;
-	for(int i = 0; i < 1; ++i)
+	for(int i = 0; i < 100000; ++i)
 	{
-		temp.begin = i * 1000000;
-		temp.end = (i + 1) * 1000000;
+		temp.begin = i * 100;
+		temp.end = (i + 1) * 100;
 		q.push(temp);
 	}
 
