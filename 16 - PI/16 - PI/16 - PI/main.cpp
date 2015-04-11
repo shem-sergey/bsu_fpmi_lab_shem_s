@@ -3,20 +3,45 @@
 #include <chrono>
 #include <climits>
 #include <vector>
+#include <utility>
+#include <queue>
+#include <mutex>
 
 using namespace std;
 
-double* results;
+struct piece
+{
+	int begin, end;
+};
 
+queue<piece> q;
+double PI = 3;
+mutex MUTEX;
 
-void calculate( unsigned long long int low_bound, unsigned long long int up_bound, int num)
+void calculate(int begin, int end)
 {
 	double sum = 0;
-	for(unsigned long long int i = low_bound; i < up_bound; ++i)
+	for(unsigned long long int i = begin; i < end; ++i)
 	{
 		sum = sum + 4./((4.*i+2)*(4.*i+3)*(4.*i+4)) - 4./((4.*i+4)*(4.*i+5)*(4.*i+6));
 	}
-	results[num] = sum; 
+	cout << "sum = " << sum << endl;
+	MUTEX.lock();
+	PI = PI + sum;
+	MUTEX.unlock();
+}
+
+void calc()
+{
+	while(!q.empty())
+	{
+		piece tmp;
+		MUTEX.lock();
+		tmp = q.back();
+		q.pop();
+		MUTEX.unlock();
+		calculate(tmp.begin, tmp.end);
+	}
 }
 
 int main()
@@ -25,33 +50,28 @@ int main()
 	short threads;
 	cin >> threads;
 
+	piece temp;
+	for(int i = 0; i < 1; ++i)
+	{
+		temp.begin = i * 1000000;
+		temp.end = (i + 1) * 1000000;
+		q.push(temp);
+	}
+
 	chrono::time_point<chrono::system_clock> start, end;
 	start = chrono::system_clock::now();
-	
-	results = new double[threads];
-	vector<unsigned long long int> iterations;
-	unsigned long long int segment = 12000000 / threads, temp;
-	for(short i = 0; i <= threads; ++i)
-	{
-		temp = i * segment;
-		iterations.push_back(temp);
-	}
 
 	std::thread *THR = new std::thread [threads];
 
 
 	for(int i = 0; i < threads; i++)
-		THR[i] = std::thread(calculate, iterations[i], iterations[i+1], i);
+		THR[i] = std::thread(calc);
 	for(int i = 0; i<threads; i++)
 		THR[i].join();
 
-	double PI = 3;
-	for(int i = 0; i < threads; ++i)
-		PI += results[i];
-
-	cout.precision(30);
+	cout.precision(16);
 	cout << PI << endl;   
-	cout << "3,141592653589793 238462643383279 502\n";
+	cout << "3,14159265358979 3238462643383279 502\n";
 
 	end = std::chrono::system_clock::now();
 	std::chrono::duration<double> time_result = end - start;
